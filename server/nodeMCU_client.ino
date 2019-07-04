@@ -16,8 +16,12 @@ White D1, arduino ide correlate= 5, (B)
  */
 
 #include <ESP8266WiFi.h>
+#include <ESP8266WiFiMulti.h>
+
 #include <Arduino.h>
 #include <ESP8266HTTPClient.h>
+#include <WiFiClientSecureBearSSL.h>
+
 
 #ifndef STASSID
 #define STASSID "KupaaNew"
@@ -27,8 +31,7 @@ White D1, arduino ide correlate= 5, (B)
 const char* ssid     = STASSID;
 const char* password = STAPSK;
 
-String host = "google.com/";
-int port = 80;
+  String iot_url = "https://iot.dakine.website";
  
   volatile unsigned int  temp, counter = 50; //This variable will increase or decrease depending on the rotation of encoder
   int startThreshold = 80;
@@ -48,16 +51,16 @@ void setup() {
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
-      Serial.println("");
-  Serial.println("WiFi connected"); 
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+    Serial.println("");
+ 
   }
 
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+
+
   
 //wifi code
   pinMode(16, INPUT_PULLUP); // internal pullup input pin 16 nodeMCU pin :
@@ -79,76 +82,49 @@ void setup() {
 
   void loop() 
   {
+    /* WIFI CODE */
+    bool connected = false;
+    if ((WiFiMulti.run() == WL_CONNECTED)) {connected = true}
+  /* WIFI CODE */
 
-//wifi code
-  WiFiClient client;
-  
-Serial.print("connecting to ");
-  Serial.print(host);
-  Serial.print(':');
-  Serial.println(port);
-  client.begin("http://192.168.0.4:80/");
-  http.GET();
-
-  String payload = client.getString();
-  Serial.println(payload);
-  
   
 
-  // Use WiFiClient class to create TCP connections
-//  if (!client.connect(host, port)) {
-//    Serial.println("connection failed");
-//    delay(5000);
-//    return;
-//  }
 
   // This will send a string to the server
   Serial.println("sending data to server");
   if (client.connected()) {
     client.println("hello from ESP8266");
   }
+  //wifi code
+  std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
+  client->setInsecure();
 
-    // This will send the request to the server
-//  client.print(String("GET ") + "/" + " HTTP/1.1\r\n" +
-//               "Host: " + 
-//               "/"+ "\r\n" +
-//               "Connection: close\r\n\r\n");
-//  unsigned long timeout = millis();
-//  while (client.available() == 0) {
-//    if (millis() - timeout > 5000) {
-//      Serial.println(">>> Client Timeout !");
-//      client.stop();
-//      return;
-//    }
-//  }
+    HTTPClient http;
+  
 
-
-
-  // Read all the lines of the reply from server and print them to Serial
-  Serial.println("receiving from remote server");
-  // not testing 'client.connected()' since we do not need to send data here
-  while (client.available()) {
-    char ch = static_cast<char>(client.read());
-    Serial.print(ch);
-  }
-
-  // Close the connection
-  Serial.println();
-  Serial.println("closing connection");
-  client.stop();
-
-
-
+  
 //wifi code
 
 
 
     
 // send value of counter
-  if( counter != temp )
-  {
-  Serial.println (counter);
-  temp = counter;
+  if( counter != temp ){
+    Serial.println (counter);
+    temp = counter;
+    Serial.print("[HTTP] begin...\n");
+    if (http.begin(*client, iot_url + "/rotary/"+counter+"/0")) {  // HTTP
+      http.addHeader("secret", "8266iot");
+
+      Serial.print("[HTTP] GET...\n");
+      // start connection and send HTTP header
+      int httpCode = http.GET();
+      Serial.print(httpCode);
+      http.end();
+    } else {
+      Serial.printf("[HTTP} Unable to connect - relay off\n");
+    }
+  
   }
   //if this button is pressed, we will assign the counter start threshold to 'counter'
    if(digitalRead(2)==1)
@@ -156,6 +132,18 @@ Serial.print("connecting to ");
     startThreshold = counter;
     Serial.print("start threshold assigned:"); 
     Serial.println(startThreshold);
+    Serial.print("[HTTP] begin...\n");
+    if (http.begin(*client, iot_url + "/rotary/set_start_treshold/"+startThreshold+"/0")) {  // HTTP
+      http.addHeader("secret", "8266iot");
+
+      Serial.print("[HTTP] GET...\n");
+      // start connection and send HTTP header
+      int httpCode = http.GET();
+      Serial.print(httpCode);
+      http.end();
+    } else {
+      Serial.printf("[HTTP} Unable to connect - relay off\n");
+    }
    }
   
 //    if this button is pressed, we will assign the counter start threshold to 'counter'
@@ -164,6 +152,18 @@ Serial.print("connecting to ");
     stopThreshold = counter;
     Serial.print("stop threshold assigned:");  
     Serial.println(stopThreshold);
+    Serial.print("[HTTP] begin...\n");
+    if (http.begin(*client, iot_url + "/rotary/set_stop_treshold/"+stopThreshold+"/0")) {  // HTTP
+      http.addHeader("secret", "8266iot");
+
+      Serial.print("[HTTP] GET...\n");
+      // start connection and send HTTP header
+      int httpCode = http.GET();
+      Serial.print(httpCode);
+      http.end();
+    } else {
+      Serial.printf("[HTTP} Unable to connect - relay off\n");
+    }
     delay(1000);
    }
    delay(1000);
@@ -177,20 +177,44 @@ Serial.print("connecting to ");
    Serial.println(action);
    delay(1000);
 
-  if(counter > startThreshold )
-    {
+  if(counter > startThreshold ){
     action = 1;
-    Serial.println("relay on");    
-    delay(1000);
+    Serial.println("relay on");  
+
+    Serial.print("[HTTP] begin...\n");
+    if (http.begin(*client, iot_url + "/rotary/action/relay_on/0")) {  // HTTP
+      http.addHeader("secret", "8266iot");
+
+      Serial.print("[HTTP] GET...\n");
+      // start connection and send HTTP header
+      int httpCode = http.GET();
+      Serial.print(httpCode);
+      http.end();
+    } else {
+      Serial.printf("[HTTP} Unable to connect - relay off\n");
     }
+  }
     
     
-  if(counter < stopThreshold)
-      {
-        action = 0;
-        Serial.println("relay off") ;
-       }
+  if(counter < stopThreshold){
+      action = 0;
+      Serial.println("relay off") ;
+
+      Serial.print("[HTTP] begin...\n");
+      if (http.begin(*client, iot_url + "/rotary/action/relay_off/0")) {  // HTTP
+        http.addHeader("secret", "8266iot");
+
+        Serial.print("[HTTP] GET...\n");
+        // start connection and send HTTP header
+        int httpCode = http.GET();
+        Serial.print(httpCode);
+        http.end();
+      } else {
+        Serial.printf("[HTTP} Unable to connect - relay off\n");
+      }
     }
+      delay(1000)
+  }
      
   void ai0() {
   // ai0 is activated if DigitalPin nr 5 is going from LOW to HIGH
@@ -230,3 +254,23 @@ Serial.print("connecting to ");
   }
   }
 */
+
+
+// void send_data(int data, WiFiClientSecure *client){
+//   Serial.print("[HTTP] begin...\n");
+//   if (http.begin(*client, iot_url + "/temp/"+temperature+"/"+humidity+"/0")) {  // HTTP
+//       http.addHeader("secret", "8266iot");
+
+//     Serial.print("[HTTP] GET...\n");
+//     // start connection and send HTTP header
+//     int httpCode = http.GET();
+//           Serial.print(httpCode);
+
+
+//     http.end();
+//   } else {
+//     Serial.printf("[HTTP} Unable to connect\n");
+//   }
+  
+
+// }
