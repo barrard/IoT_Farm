@@ -25,10 +25,6 @@ White D1, arduino ide correlate= 5, (B)
 #include <WiFiClientSecureBearSSL.h>
 
 ESP8266WiFiMulti WiFiMulti;
-<<<<<<< HEAD
-
-=======
->>>>>>> befc18b8f71f3e168978f6b63effe5394d45daed
 
 #ifndef STASSID
 #define STASSID "KupaaNew"
