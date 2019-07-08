@@ -123,7 +123,7 @@ void setup() {
   if( counter != temp ){
     Serial.println (counter);
     temp = counter;
-    Serial.print("[HTTP] begin...\n");
+    Serial.print("[HTTP] begin...sending counter \n");
     if (http.begin(*client, iot_url + "/rotary/"+counter+"/0")) {  // HTTP
       http.addHeader("secret", "8266iot");
 
@@ -143,7 +143,7 @@ void setup() {
     startThreshold = counter;
     Serial.print("start threshold assigned:"); 
     Serial.println(startThreshold);
-    Serial.print("[HTTP] begin...\n");
+    Serial.print("[HTTP] begin.. setting start threshold.\n");
     if (http.begin(*client, iot_url + "/rotary/set_start_treshold/"+startThreshold+"/0")) {  // HTTP
       http.addHeader("secret", "8266iot");
 
@@ -163,7 +163,7 @@ void setup() {
     stopThreshold = counter;
     Serial.print("stop threshold assigned:");  
     Serial.println(stopThreshold);
-    Serial.print("[HTTP] begin...\n");
+    Serial.print("[HTTP] begin.. setting stopThreshold.\n");
     if (http.begin(*client, iot_url + "/rotary/set_stop_treshold/"+stopThreshold+"/0")) {  // HTTP
       http.addHeader("secret", "8266iot");
 
@@ -192,7 +192,7 @@ void setup() {
     action = 1;
     Serial.println("relay on");  
 
-    Serial.print("[HTTP] begin...\n");
+    Serial.print("[HTTP] begin.. counter > startThreshold.\n");
     if (http.begin(*client, iot_url + "/rotary/action/relay_on/0")) {  // HTTP
       http.addHeader("secret", "8266iot");
 
@@ -211,7 +211,7 @@ void setup() {
       action = 0;
       Serial.println("relay off") ;
 
-      Serial.print("[HTTP] begin...\n");
+      Serial.print("[HTTP] begin.. counter < stopThreshold.\n");
       if (http.begin(*client, iot_url + "/rotary/action/relay_off/0")) {  // HTTP
         http.addHeader("secret", "8266iot");
 
