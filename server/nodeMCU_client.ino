@@ -15,12 +15,16 @@ White D1, arduino ide correlate= 5, (B)
 15 = 8
  */
 
+#include <Arduino.h>
+
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 
-#include <Arduino.h>
 #include <ESP8266HTTPClient.h>
+
 #include <WiFiClientSecureBearSSL.h>
+
+ESP8266WiFiMulti WiFiMulti;
 
 
 #ifndef STASSID
@@ -46,19 +50,7 @@ void setup() {
 //  wifi code
 
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-    Serial.println("");
- 
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  WiFiMulti.addAP(ssid, password);
 
 
   
@@ -77,24 +69,43 @@ void setup() {
   attachInterrupt(5, ai1, RISING);
 //  attachInterrupt(2, ai2, RISING);
 //  attachInterrupt(4, ai4, RISING);
+
+  // while (WiFiMulti.status() != WL_CONNECTED) {
+  //   delay(500);
+  //   Serial.print(".");
+  //   Serial.println("");
+ 
+  // }
+
+  // Serial.println("");
+  // Serial.println("WiFi connected");
+  // Serial.println("IP address: ");
+  // Serial.println(WiFiMulti.localIP());
+
+
   
   }
 
   void loop() 
   {
     /* WIFI CODE */
-    bool connected = false;
-    if ((WiFiMulti.run() == WL_CONNECTED)) {connected = true}
+    // bool connected = false;
+    // if ((WiFiMulti.run() == WL_CONNECTED)) {connected = true}
   /* WIFI CODE */
+    if ((WiFiMulti.run() != WL_CONNECTED)) {
+      Serial.println('Not yet connected');
+      delay(2000);
+      return;
+    }
 
   
 
 
   // This will send a string to the server
-  Serial.println("sending data to server");
-  if (client.connected()) {
-    client.println("hello from ESP8266");
-  }
+  // Serial.println("sending data to server");
+  // if (client.connected()) {
+  //   client.println("hello from ESP8266");
+  // }
   //wifi code
   std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
   client->setInsecure();
