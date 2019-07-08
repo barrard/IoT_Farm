@@ -25,7 +25,10 @@ White D1, arduino ide correlate= 5, (B)
 #include <WiFiClientSecureBearSSL.h>
 
 ESP8266WiFiMulti WiFiMulti;
+<<<<<<< HEAD
 
+=======
+>>>>>>> befc18b8f71f3e168978f6b63effe5394d45daed
 
 #ifndef STASSID
 #define STASSID "KupaaNew"
@@ -91,6 +94,7 @@ void setup() {
     /* WIFI CODE */
     // bool connected = false;
     // if ((WiFiMulti.run() == WL_CONNECTED)) {connected = true}
+
   /* WIFI CODE */
     if ((WiFiMulti.run() != WL_CONNECTED)) {
       Serial.println('Not yet connected');
@@ -102,6 +106,7 @@ void setup() {
 
 
   // This will send a string to the server
+
   // Serial.println("sending data to server");
   // if (client.connected()) {
   //   client.println("hello from ESP8266");
@@ -110,6 +115,9 @@ void setup() {
   std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
   client->setInsecure();
 
+  // if (client.connected()) {
+  //   client.println("hello from ESP8266");
+  // }
     HTTPClient http;
   
 
@@ -224,7 +232,7 @@ void setup() {
         Serial.printf("[HTTP} Unable to connect - relay off\n");
       }
     }
-      delay(1000)
+      delay(1000);
   }
      
   void ai0() {
