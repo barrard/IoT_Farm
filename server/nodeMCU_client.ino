@@ -36,9 +36,9 @@ const char* password = STAPSK;
 
   String iot_url = "https://iot.dakine.website";
  
-  volatile unsigned int  temp, counter = 50; //This variable will increase or decrease depending on the rotation of encoder
-  int startThreshold = 80;
-  int stopThreshold = 40;
+  volatile unsigned int  temp, counter = 1050; //This variable will increase or decrease depending on the rotation of encoder
+  int startThreshold =1100;
+  int stopThreshold = 1000;
   int action  = 0;
 /*const int startPin = 4; // this is the button that indicates the starting position
 const int stopPin = 0;  //this is the button that indicates the stop position*/
@@ -97,6 +97,9 @@ void setup() {
       delay(2000);
       return;
     }
+    else{
+      Serial.println("connected");
+    }
 
   
 
@@ -104,13 +107,15 @@ void setup() {
   // This will send a string to the server
 
   // Serial.println("sending data to server");
-  // if (client.connected()) {
-  //   client.println("hello from ESP8266");
-  // }
-  //wifi code
-  std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
-  client->setInsecure();
 
+  //wifi code
+
+ std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
+ client->setInsecure();
+
+// BearSSL::WiFiClientSecure client;
+// client.setInsecure();
+// const char* host = "iot.dakine.website";
   // if (client.connected()) {
   //   client.println("hello from ESP8266");
   // }
@@ -127,17 +132,24 @@ void setup() {
   if( counter != temp ){
     Serial.println (counter);
     temp = counter;
+ 
+
     Serial.print("[HTTP] begin...sending counter \n");
     if (http.begin(*client, iot_url + "/rotary/"+counter+"/0")) {  // HTTP
       http.addHeader("secret", "8266iot");
+      Serial.println("added header");
 
       Serial.print("[HTTP] GET...\n");
       // start connection and send HTTP header
       int httpCode = http.GET();
+      Serial.print("called get method!!!");
       Serial.print(httpCode);
+      Serial.print("should have printed httpCode by now...");
       http.end();
+      Serial.print("http has ended");
     } else {
-      Serial.printf("[HTTP} Unable to connect - relay off\n");
+      Serial.println(counter);
+      Serial.printf("[HTTP} Unable to connect - sending counter \n");
     }
   
   }
@@ -157,7 +169,7 @@ void setup() {
       Serial.print(httpCode);
       http.end();
     } else {
-      Serial.printf("[HTTP} Unable to connect - relay off\n");
+      Serial.printf("[HTTP} Unable to connect - assigning startThreshold\n");
     }
    }
   
@@ -177,7 +189,7 @@ void setup() {
       Serial.print(httpCode);
       http.end();
     } else {
-      Serial.printf("[HTTP} Unable to connect - relay off\n");
+      Serial.printf("[HTTP} Unable to connect - setting stopThreshold\n");
     }
     delay(1000);
    }
@@ -206,14 +218,14 @@ void setup() {
       Serial.print(httpCode);
       http.end();
     } else {
-      Serial.printf("[HTTP} Unable to connect - relay off\n");
+      Serial.printf("[HTTP} Unable to connect - counter > startThreshold\n");
     }
   }
     
     
   if(counter < stopThreshold){
       action = 0;
-      Serial.println("relay off") ;
+      // Serial.println("relay off") ;
 
       Serial.print("[HTTP] begin.. counter < stopThreshold.\n");
       if (http.begin(*client, iot_url + "/rotary/action/relay_off/0")) {  // HTTP
@@ -225,7 +237,7 @@ void setup() {
         Serial.print(httpCode);
         http.end();
       } else {
-        Serial.printf("[HTTP} Unable to connect - relay off\n");
+        Serial.printf("[HTTP} Unable to connect - counter < stopThreshold\n");
       }
     }
       delay(1000);
