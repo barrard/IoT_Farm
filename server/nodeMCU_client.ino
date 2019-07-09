@@ -135,7 +135,7 @@ void setup() {
  
 
     Serial.print("[HTTP] begin...sending counter \n");
-    if (http.begin(*client, iot_url + "/rotary/"+counter+"/0")) {  // HTTP
+    if (http.begin(*client, iot_url + "/rotary/value/"+counter+"/0")) {  // HTTP
       http.addHeader("secret", "8266iot");
       Serial.println("added header");
 
