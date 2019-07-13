@@ -85,9 +85,7 @@ void setup() {
     USE_SERIAL.printf("[SETUP] WiFi Connected %s\n", ip.c_str());
 
     // server address, port and URL
-//    socketIO.begin("rotor_socket.dakine.website", 8267);
     socketIO.begin("165.227.2.98", 8267);
-//    socketIO.begin("192.168.0.93", 8267);
 
     // event handler
     socketIO.onEvent(socketIOEvent);

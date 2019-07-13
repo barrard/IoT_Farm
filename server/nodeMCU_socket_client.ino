@@ -54,7 +54,7 @@ const int stopPin = 0;  //this is the button that indicates the stop position*/
 
 void setup()
 {
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     //  wifi code
 
@@ -88,6 +88,7 @@ void setup()
     // Serial.println("WiFi connected");
     // Serial.println("IP address: ");
     // Serial.println(WiFiMulti.localIP());
+    // socketIO.setExtraHeaders("Host:iot.dakine.website");
     socketIO.begin("165.227.2.98", 8267);
     socketIO.onEvent(socketIOEvent);
 }
