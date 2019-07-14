@@ -35,6 +35,8 @@ ESP8266WiFiMulti WiFiMulti;
 SocketIOclient socketIO;
 
 #ifndef STASSID
+// #define STASSID "SanD"
+// #define STAPSK "sweetbelly"
 #define STASSID "KupaaNew"
 #define STAPSK "GrownOnMaui"
 #endif
@@ -52,13 +54,16 @@ int action = 0;
 const int stopPin = 0;  //this is the button that indicates the stop position*/
 #define USE_SERIAL Serial
 
+void ICACHE_RAM_ATTR ai0();
+void ICACHE_RAM_ATTR ai1();
+
 void setup()
 {
     Serial.begin(115200);
 
     //  wifi code
 
-    WiFi.mode(WIFI_STA);
+    // WiFi.mode(WIFI_STA);
     WiFiMulti.addAP(ssid, password);
 
     //wifi code
@@ -71,9 +76,9 @@ void setup()
     pinMode(4, INPUT);
     //Setting up interrupt
     //A rising pulse from encodenren activated ai0().              AttachInterrupt 0 is DigitalPin nr 2 on moust Arduino.
-    attachInterrupt(16, ai0, RISING);
+    attachInterrupt(digitalPinToInterrupt(16), ai0, RISING);
     //B rising pulse from encodenren activated ai1().               AttachInterrupt 1 is DigitalPin nr 3 on moust Arduino.
-    attachInterrupt(5, ai1, RISING);
+    attachInterrupt(digitalPinToInterrupt(5), ai1, RISING);
     //  attachInterrupt(2, ai2, RISING);
     //  attachInterrupt(4, ai4, RISING);
 
@@ -93,188 +98,197 @@ void setup()
     socketIO.onEvent(socketIOEvent);
 }
 
+unsigned long timer = 0;
 void loop()
 {
     /* WIFI CODE */
     // bool connected = false;
     // if ((WiFiMulti.run() == WL_CONNECTED)) {connected = true}
     socketIO.loop();
-
-    /* WIFI CODE */
-    if ((WiFiMulti.run() != WL_CONNECTED))
+    uint64_t now = millis();
+    if (now - timer > 2000)
     {
-        Serial.println('Not yet connected');
-        delay(2000);
-        return;
-    }
+        timer = now;
 
-    // This will send a string to the server
-
-    // Serial.println("sending data to server");
-    // if (client.connected()) {
-    //   client.println("hello from ESP8266");
-    // }
-    //wifi code
-    //   std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
-    //   client->setInsecure();
-
-    // if (client.connected()) {
-    //   client.println("hello from ESP8266");
-    // }
-    // HTTPClient http;
-
-    //wifi code
-
-    // send value of counter
-    if (counter != temp)
-    {
-        Serial.println(counter);
-        temp = counter;
-        // Serial.print("[HTTP] begin...sending counter \n");
-        // if (http.begin(*client, iot_url + "/rotary/"+counter+"/0")) {  // HTTP
-        //   http.addHeader("secret", "8266iot");
-
-        //   Serial.print("[HTTP] GET...\n");
-        //   // start connection and send HTTP header
-        //   int httpCode = http.GET();
-        //   Serial.print(httpCode);
-        //   http.end();
-        // } else {
-        //   Serial.printf("[HTTP} Unable to connect - relay off\n");
-        // }
-        DynamicJsonDocument doc(1024);
-        JsonArray array = doc.to<JsonArray>();
-        array.add("rotor");
-        JsonObject param1 = array.createNestedObject();
-        param1["value"] = counter;
-        String output;
-        serializeJson(doc, output);
-        socketIO.sendEVENT(output);
-    }
-    //if this button is pressed, we will assign the counter start threshold to 'counter'
-    if (digitalRead(2) == 1)
-    {
-        startThreshold = counter;
-        Serial.print("start threshold assigned:");
-        Serial.println(startThreshold);
-        // Serial.print("[HTTP] begin.. setting start threshold.\n");
-        // if (http.begin(*client, iot_url + "/rotary/set_start_treshold/"+startThreshold+"/0")) {  // HTTP
-        //   http.addHeader("secret", "8266iot");
-
-        //   Serial.print("[HTTP] GET...\n");
-        //   // start connection and send HTTP header
-        //   int httpCode = http.GET();
-        //   Serial.print(httpCode);
-        //   http.end();
-        // } else {
-        //   Serial.printf("[HTTP} Unable to connect - relay off\n");
-        // }
-        DynamicJsonDocument doc(1024);
-        JsonArray array = doc.to<JsonArray>();
-        array.add("rotor");
-        JsonObject param1 = array.createNestedObject();
-        param1["startThreshold"] = startThreshold;
-        String output;
-        serializeJson(doc, output);
-        socketIO.sendEVENT(output);
-    }
-
-    //    if this button is pressed, we will assign the counter start threshold to 'counter'
-    if (digitalRead(4) == 1)
-    {
-        stopThreshold = counter;
-        Serial.print("stop threshold assigned:");
-        Serial.println(stopThreshold);
-        // Serial.print("[HTTP] begin.. setting stopThreshold.\n");
-        // if (http.begin(*client, iot_url + "/rotary/set_stop_treshold/"+stopThreshold+"/0")) {  // HTTP
-        //   http.addHeader("secret", "8266iot");
-
-        //   Serial.print("[HTTP] GET...\n");
-        //   // start connection and send HTTP header
-        //   int httpCode = http.GET();
-        //   Serial.print(httpCode);
-        //   http.end();
-        // } else {
-        //   Serial.printf("[HTTP} Unable to connect - relay off\n");
-        // }
-        // delay(1000);
-        DynamicJsonDocument doc(1024);
-        JsonArray array = doc.to<JsonArray>();
-        array.add("rotor");
-        JsonObject param1 = array.createNestedObject();
-        param1["stopThreshold"] = stopThreshold;
-        String output;
-        serializeJson(doc, output);
-        socketIO.sendEVENT(output);
-    }
-    //    delay(1000);
-    //    Serial.print("counter:");
-    //    Serial.println(counter);
-    //    Serial.print("startThreshold:");
-    //    Serial.println(startThreshold);
-    //    Serial.print("stopThreshold:");
-    //    Serial.println(stopThreshold)   ;
-    //    Serial.print("action:");
-    //    Serial.println(action);
-    //    delay(1000);
-
-    if (counter > startThreshold)
-    {
-        action = 1;
-        Serial.println("relay on");
-
-        // Serial.print("[HTTP] begin.. counter > startThreshold.\n");
-        // if (http.begin(*client, iot_url + "/rotary/action/relay_on/0")) {  // HTTP
-        //   http.addHeader("secret", "8266iot");
-
-        //   Serial.print("[HTTP] GET...\n");
-        //   // start connection and send HTTP header
-        //   int httpCode = http.GET();
-        //   Serial.print(httpCode);
-        //   http.end();
-        // } else {
-        //   Serial.printf("[HTTP} Unable to connect - relay off\n");
-        // }
-        DynamicJsonDocument doc(1024);
-        JsonArray array = doc.to<JsonArray>();
-        array.add("rotor");
-        JsonObject param1 = array.createNestedObject();
-        param1["relay_on"] = action;
-        String output;
-        serializeJson(doc, output);
-        socketIO.sendEVENT(output);
-    }
-
-    if (counter < stopThreshold)
-    {
-        action = 0;
-        Serial.println("relay off");
-
-        // Serial.print("[HTTP] begin.. counter < stopThreshold.\n");
-        // if (http.begin(*client, iot_url + "/rotary/action/relay_off/0"))
-        // { // HTTP
-        //     http.addHeader("secret", "8266iot");
-
-        //     Serial.print("[HTTP] GET...\n");
-        //     // start connection and send HTTP header
-        //     int httpCode = http.GET();
-        //     Serial.print(httpCode);
-        //     http.end();
-        // }
-        // else
+        /* WIFI CODE */
+        // if ((WiFiMulti.run() != WL_CONNECTED))
         // {
-        //     Serial.printf("[HTTP} Unable to connect - relay off\n");
+        //     Serial.println('Not yet connected');
+        //     delay(2000);
+        //     return;
         // }
-        DynamicJsonDocument doc(1024);
-        JsonArray array = doc.to<JsonArray>();
-        array.add("rotor");
-        JsonObject param1 = array.createNestedObject();
-        param1["relay_off"] = action;
-        String output;
-        serializeJson(doc, output);
-        socketIO.sendEVENT(output);
+
+        // This will send a string to the server
+
+        // Serial.println("sending data to server");
+        // if (client.connected()) {
+        //   client.println("hello from ESP8266");
+        // }
+        //wifi code
+        //   std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
+        //   client->setInsecure();
+
+        // if (client.connected()) {
+        //   client.println("hello from ESP8266");
+        // }
+        // HTTPClient http;
+
+        //wifi code
+
+        // send value of counter
+        if (counter != temp)
+        {
+            Serial.println(counter);
+            temp = counter;
+            // Serial.print("[HTTP] begin...sending counter \n");
+            // if (http.begin(*client, iot_url + "/rotary/"+counter+"/0")) {  // HTTP
+            //   http.addHeader("secret", "8266iot");
+
+            //   Serial.print("[HTTP] GET...\n");
+            //   // start connection and send HTTP header
+            //   int httpCode = http.GET();
+            //   Serial.print(httpCode);
+            //   http.end();
+            // } else {
+            //   Serial.printf("[HTTP} Unable to connect - relay off\n");
+            // }
+            DynamicJsonDocument doc(1024);
+            JsonArray array = doc.to<JsonArray>();
+            array.add("rotor");
+            JsonObject param1 = array.createNestedObject();
+            param1["value"] = counter;
+            String output;
+            serializeJson(doc, output);
+            socketIO.sendEVENT(output);
+            USE_SERIAL.println(output);
+        }
+        //if this button is pressed, we will assign the counter start threshold to 'counter'
+        if (digitalRead(2) == 1)
+        {
+            startThreshold = counter;
+            Serial.print("start threshold assigned:");
+            Serial.println(startThreshold);
+            // Serial.print("[HTTP] begin.. setting start threshold.\n");
+            // if (http.begin(*client, iot_url + "/rotary/set_start_treshold/"+startThreshold+"/0")) {  // HTTP
+            //   http.addHeader("secret", "8266iot");
+
+            //   Serial.print("[HTTP] GET...\n");
+            //   // start connection and send HTTP header
+            //   int httpCode = http.GET();
+            //   Serial.print(httpCode);
+            //   http.end();
+            // } else {
+            //   Serial.printf("[HTTP} Unable to connect - relay off\n");
+            // }
+            DynamicJsonDocument doc(1024);
+            JsonArray array = doc.to<JsonArray>();
+            array.add("rotor");
+            JsonObject param1 = array.createNestedObject();
+            param1["startThreshold"] = startThreshold;
+            String output;
+            serializeJson(doc, output);
+            socketIO.sendEVENT(output);
+            USE_SERIAL.println(output);
+        }
+
+        //    if this button is pressed, we will assign the counter start threshold to 'counter'
+        if (digitalRead(4) == 1)
+        {
+            stopThreshold = counter;
+            Serial.print("stop threshold assigned:");
+            Serial.println(stopThreshold);
+            // Serial.print("[HTTP] begin.. setting stopThreshold.\n");
+            // if (http.begin(*client, iot_url + "/rotary/set_stop_treshold/"+stopThreshold+"/0")) {  // HTTP
+            //   http.addHeader("secret", "8266iot");
+
+            //   Serial.print("[HTTP] GET...\n");
+            //   // start connection and send HTTP header
+            //   int httpCode = http.GET();
+            //   Serial.print(httpCode);
+            //   http.end();
+            // } else {
+            //   Serial.printf("[HTTP} Unable to connect - relay off\n");
+            // }
+            // delay(1000);
+            DynamicJsonDocument doc(1024);
+            JsonArray array = doc.to<JsonArray>();
+            array.add("rotor");
+            JsonObject param1 = array.createNestedObject();
+            param1["stopThreshold"] = stopThreshold;
+            String output;
+            serializeJson(doc, output);
+            socketIO.sendEVENT(output);
+            USE_SERIAL.println(output);
+        }
+        //    delay(1000);
+        //    Serial.print("counter:");
+        //    Serial.println(counter);
+        //    Serial.print("startThreshold:");
+        //    Serial.println(startThreshold);
+        //    Serial.print("stopThreshold:");
+        //    Serial.println(stopThreshold)   ;
+        //    Serial.print("action:");
+        //    Serial.println(action);
+        //    delay(1000);
+
+        if (counter > startThreshold)
+        {
+            action = 1;
+            Serial.println("relay on");
+
+            // Serial.print("[HTTP] begin.. counter > startThreshold.\n");
+            // if (http.begin(*client, iot_url + "/rotary/action/relay_on/0")) {  // HTTP
+            //   http.addHeader("secret", "8266iot");
+
+            //   Serial.print("[HTTP] GET...\n");
+            //   // start connection and send HTTP header
+            //   int httpCode = http.GET();
+            //   Serial.print(httpCode);
+            //   http.end();
+            // } else {
+            //   Serial.printf("[HTTP} Unable to connect - relay off\n");
+            // }
+            DynamicJsonDocument doc(1024);
+            JsonArray array = doc.to<JsonArray>();
+            array.add("rotor");
+            JsonObject param1 = array.createNestedObject();
+            param1["relay_on"] = action;
+            String output;
+            serializeJson(doc, output);
+            socketIO.sendEVENT(output);
+        }
+
+        if (counter < stopThreshold)
+        {
+            action = 0;
+            Serial.println("relay off");
+
+            // Serial.print("[HTTP] begin.. counter < stopThreshold.\n");
+            // if (http.begin(*client, iot_url + "/rotary/action/relay_off/0"))
+            // { // HTTP
+            //     http.addHeader("secret", "8266iot");
+
+            //     Serial.print("[HTTP] GET...\n");
+            //     // start connection and send HTTP header
+            //     int httpCode = http.GET();
+            //     Serial.print(httpCode);
+            //     http.end();
+            // }
+            // else
+            // {
+            //     Serial.printf("[HTTP} Unable to connect - relay off\n");
+            // }
+            DynamicJsonDocument doc(1024);
+            JsonArray array = doc.to<JsonArray>();
+            array.add("rotor");
+            JsonObject param1 = array.createNestedObject();
+            param1["relay_off"] = action;
+            String output;
+            serializeJson(doc, output);
+            socketIO.sendEVENT(output);
+        }
+        // delay(1000);
     }
-    // delay(1000);
 }
 
 void ai0()
