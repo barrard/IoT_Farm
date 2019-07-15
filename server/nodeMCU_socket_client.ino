@@ -163,7 +163,7 @@ void loop()
             USE_SERIAL.println(output);
         }
         //if this button is pressed, we will assign the counter start threshold to 'counter'
-        if (digitalRead(2) == 1)
+        if (digitalRead(2) == 1 && startThreshold!=counter)
         {
             startThreshold = counter;
             Serial.print("start threshold assigned:");
@@ -192,7 +192,7 @@ void loop()
         }
 
         //    if this button is pressed, we will assign the counter start threshold to 'counter'
-        if (digitalRead(4) == 1)
+        if (digitalRead(4) == 1 && stopThreshold!=counter)
         {
             stopThreshold = counter;
             Serial.print("stop threshold assigned:");
@@ -231,7 +231,7 @@ void loop()
         //    Serial.println(action);
         //    delay(1000);
 
-        if (counter > startThreshold)
+        if (counter > startThreshold && action!=1)
         {
             action = 1;
             Serial.println("relay on");
@@ -258,7 +258,7 @@ void loop()
             socketIO.sendEVENT(output);
         }
 
-        if (counter < stopThreshold)
+        if (counter < stopThreshold && action!=0)
         {
             action = 0;
             Serial.println("relay off");
