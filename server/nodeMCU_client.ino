@@ -84,12 +84,18 @@ void setup()
 
 void loop()
 {
-  loop_counter++;
+      socketIO.loop();
+    uint64_t now = millis();
+    if (now - timer > 2000)
+    {
+        timer = now;
+  
+  // loop_counter++;
   /* WIFI CODE */
   if ((WiFiMulti.run() != WL_CONNECTED))
   {
     Serial.println('Not yet connected');
-    delay(2000);
+    // delay(2000);
     return;
   }
   else
@@ -223,7 +229,8 @@ void loop()
       Serial.printf("[HTTP} Unable to connect - counter < stopThreshold\n");
     }
   }
-  delay(2000);
+  // delay(2000);
+}
 }
 
 void ai0()
